@@ -12,51 +12,61 @@ import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.rzl.app_github_user.ItemsItem
 import com.rzl.app_github_user.R
+import com.rzl.app_github_user.data.local.entity.UserEntity
 import com.rzl.app_github_user.databinding.ActivityDetailUserBinding
-import com.rzl.app_github_user.ui.follow.FollowFragment.Companion.TAB_TITLES
-import com.rzl.app_github_user.ui.main.MainActivity
-
 
 
 class DetailUserActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityDetailUserBinding
+    private var _binding: ActivityDetailUserBinding? = null
+    private val binding get() = _binding
+
     private lateinit var viewModel: DetailViewModel
+
+    private var fabFavorite: Boolean = false
+    private var favoriteUser: UserEntity? = null
+    private var detailUser = ItemsItem()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityDetailUserBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        _binding = ActivityDetailUserBinding.inflate(layoutInflater)
+        setContentView(binding?.root)
 
-        supportActionBar?.hide()
+        viewModel = obtainViewModel(this@DetailUserActivity)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        viewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory())[DetailViewModel::class.java]
-        val user = intent.getParcelableExtra<ItemsItem>(MainActivity.EXTRA_DATA) as ItemsItem
+        setTabView()
 
-        viewModel.getDetailUser(user.login)
 
         viewModel.listUser.observe(this){
-                detailUser ->
+                detailList ->
+            detailUser = detailList
+            setDataToView(detailUser)
 
-            Glide.with(this)
-                .load(user.avatarUrl)
-                .circleCrop()
-                .into(binding.imgDetailPhoto)
-            binding.apply {
-                tvDetailName.text = detailUser.name
-                tvDetailLogin.text = detailUser.login
-                tvDetailFollowers.text = detailUser.followers.toString()
-                tvDetailFollowing.text = detailUser.following.toString()
-                tvDetailRepository.text = detailUser.publicRepos.toString()
+            favoriteUser = UserEntity(detailUser.id, detailUser.login, detailUser.avatarUrl)
+            viewModel.getFavorite().observe(this){ userFavorite ->
+                if (userFavorite != null){
+                    for (data in userFavorite){
+                        if (detailUser.id == data.id){
+                            fabFavorite = true
+                            binding?.fabFavorite?.setImageResource(R.drawable.ic_favorite)
+                        }
+                    }
+                }
             }
 
+            binding?.fabFavorite?.setOnClickListener {
+                if (!fabFavorite){
+                    fabFavorite = true
+                    binding!!.fabFavorite.setImageResource(R.drawable.ic_favorite)
+                    insertToDatabase(detailUser)
+                }else{
+                    fabFavorite = false
+                    binding!!.fabFavorite.setImageResource(R.drawable.ic_favorit_border)
+                    viewModel.delete(detailUser.id)
+                    Toast.makeText(this, "Delete Favorite", Toast.LENGTH_SHORT).show()
+                }
+            }
 
-            val sectionsPagerAdapter = ViewPagerAdapter(this)
-            val viewPager: ViewPager2 = findViewById(R.id.view_pager)
-            viewPager.adapter = sectionsPagerAdapter
-            val tabs: TabLayout = findViewById(R.id.tabs)
-            TabLayoutMediator(tabs, viewPager) { tab, position ->
-                tab.text = resources.getString(TAB_TITLES[position])
-            }.attach()
         }
 
         viewModel.loading.observe(this){
@@ -65,19 +75,67 @@ class DetailUserActivity : AppCompatActivity() {
 
         viewModel.error.observe(this){
             Toast.makeText(this, "Data Not Found", Toast.LENGTH_SHORT).show()
-            viewModel._error.value = false
+            viewModel.doneToastError()
         }
 
+    }
+
+    private fun setDataToView(detailList: ItemsItem){
+        binding?.let {
+            Glide.with(this)
+                .load(detailList.avatarUrl)
+                .circleCrop()
+                .into(it.imgDetailPhoto)
+        }
+        binding?.apply {
+            tvDetailName.text = detailList.name
+            tvDetailLogin.text = detailList.login
+            tvDetailFollowers.text = detailList.followers.toString()
+            tvDetailFollowing.text = detailList.following.toString()
+            tvDetailRepository.text = detailList.publicRepos.toString()
+        }
+    }
+
+    private fun setTabView(){
+        val intentUser = intent.extras
+        if (intentUser != null){
+            val userLogin = intentUser.getString(EXTRA_USER)
+            if (userLogin != null){
+                viewModel.getDetailUser(userLogin)
+                val login = Bundle()
+                login.putString(EXTRA_FRAG, userLogin)
+                val sectionPagerAdapter = ViewPagerAdapter(this, login)
+                val viewPager : ViewPager2 = binding!!.viewPager
+                viewPager.adapter = sectionPagerAdapter
+                val tabs: TabLayout = binding!!.tabs
+                TabLayoutMediator(tabs, viewPager) { tab, position ->
+                    tab.text = resources.getString(TAB_TITLES[position])
+                }.attach()
+            }
+        }
+    }
+
+    private fun insertToDatabase(detailList: ItemsItem){
+        favoriteUser.let { favoriteUser ->
+            favoriteUser?.id = detailList.id
+            favoriteUser?.login = detailList.login
+            favoriteUser?.imageUrl = detailList.avatarUrl
+            viewModel.insert(favoriteUser as UserEntity)
+            Toast.makeText(this, "Favorited", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun obtainViewModel(activity: AppCompatActivity): DetailViewModel{
+        val factory = DetailViewModelFactory.getInstance(activity.application)
+        return ViewModelProvider(activity, factory)[DetailViewModel::class.java]
     }
 
     private fun showLoading(isLoading : Boolean) {
-        if (isLoading) {
-            binding.progressBar3.visibility = View.VISIBLE
-        } else {
-            binding.progressBar3.visibility = View.GONE
-        }
+        binding?.progressBar3?.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
     companion object {
+        const val EXTRA_USER = "extra_user"
+        const val EXTRA_FRAG = "extra_fragment"
         @StringRes
         private val TAB_TITLES = intArrayOf(
             R.string.tab_text_1,

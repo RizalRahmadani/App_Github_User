@@ -7,7 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.rzl.app_github_user.GithubUserResponse
 import com.rzl.app_github_user.ItemsItem
-import com.rzl.app_github_user.data.RetrofitApi
+import com.rzl.app_github_user.data.remote.retrofit.RetrofitApi
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -30,7 +30,7 @@ class MainViewModel : ViewModel(){
     }
 
     init {
-
+    detailUser()
     }
 
 
@@ -81,9 +81,6 @@ class MainViewModel : ViewModel(){
 
         })
     }
-
-
-
 
 
 }

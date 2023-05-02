@@ -4,29 +4,37 @@ package com.rzl.app_github_user.ui.main
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
+import android.nfc.NfcAdapter.EXTRA_DATA
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rzl.app_github_user.ItemsItem
 import com.rzl.app_github_user.R
 import com.rzl.app_github_user.databinding.ActivityMainBinding
+import com.rzl.app_github_user.ui.ViewModelFactory
 import com.rzl.app_github_user.ui.detail.DetailUserActivity
+import com.rzl.app_github_user.ui.favorite.FavoriteActivity
+import com.rzl.app_github_user.ui.settings.SettingActivity
+import com.rzl.app_github_user.ui.settings.SettingPreference
+import com.rzl.app_github_user.ui.settings.SettingViewModel
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: MainViewModel
     private lateinit var rvList: RecyclerView
-
-
-    companion object{
-        const val EXTRA_DATA = "extra_data"
-    }
 
 
 
@@ -53,6 +61,19 @@ class MainActivity : AppCompatActivity() {
         rvList.setHasFixedSize(true)
 
 
+        val pref = SettingPreference.getInstance(dataStore)
+
+        val themeSettingView = ViewModelProvider(this, ViewModelFactory(pref)).get(SettingViewModel::class.java)
+
+        themeSettingView.getThemeSettings().observe(this) { isDarkModeActive: Boolean ->
+            if (isDarkModeActive) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            }
+        }
+
+
     }
 
     private fun recyclerList(userList : List<ItemsItem>){
@@ -64,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         searchUserAdapter.setOnItemClickCallback(object : MainAdapter.OnItemClickCallback{
             override fun onItemClicked(data: ItemsItem) {
                 val intent = Intent(this@MainActivity, DetailUserActivity::class.java)
-                intent.putExtra(EXTRA_DATA, data)
+                intent.putExtra(DetailUserActivity.EXTRA_USER, data.login)
                 startActivity(intent)
             }
 
@@ -101,10 +122,8 @@ class MainActivity : AppCompatActivity() {
 
         searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String?): Boolean {
-
                     viewModel.searchUser(query.toString())
                     searchView.clearFocus()
-
                 return true
             }
 
@@ -115,6 +134,21 @@ class MainActivity : AppCompatActivity() {
 
 
         return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.themeSetting -> {
+                Intent(this@MainActivity, SettingActivity::class.java).apply {
+                    startActivity(this)
+                }
+            }
+            R.id.favorite -> {
+                val intent = Intent(this, FavoriteActivity::class.java)
+                startActivity(intent)
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun showLoading(isLoading : Boolean) {

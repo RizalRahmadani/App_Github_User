@@ -9,7 +9,7 @@ import com.rzl.app_github_user.ItemsItem
 import com.rzl.app_github_user.databinding.ItemUserBinding
 
 class FollowAdapter(private val gitUserList: List<ItemsItem>) : RecyclerView.Adapter<FollowAdapter.ViewHolder>(){
-    class ViewHolder(val binding: ItemUserBinding): RecyclerView.ViewHolder(binding.root)
+    inner class ViewHolder(val binding: ItemUserBinding): RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemUserBinding.inflate(LayoutInflater.from(parent.context), parent, false)

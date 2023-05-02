@@ -3,16 +3,30 @@ package com.rzl.app_github_user.ui.main
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.rzl.app_github_user.ItemsItem
+import com.rzl.app_github_user.data.local.entity.UserEntity
 import com.rzl.app_github_user.databinding.ItemUserBinding
 
 
-class MainAdapter(private val userList: List<ItemsItem>) :
-    RecyclerView.Adapter<MainAdapter.ViewHolder>() {
+class MainAdapter(private val userList: List<ItemsItem>) : ListAdapter<UserEntity, MainAdapter.ViewHolder>(DIFF_CALLBACK) {
 
+    companion object {
+        val DIFF_CALLBACK: DiffUtil.ItemCallback<UserEntity> =
+            object : DiffUtil.ItemCallback<UserEntity>() {
+                override fun areItemsTheSame(oldUser: UserEntity, newUser: UserEntity): Boolean {
+                    return oldUser.login == newUser.login
+                }
+
+                override fun areContentsTheSame(oldUser: UserEntity, newUser: UserEntity): Boolean {
+                    return oldUser == newUser
+                }
+            }
+    }
 
     private lateinit var onItemClickCallBack: OnItemClickCallback
 

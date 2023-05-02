@@ -15,8 +15,30 @@
         android:theme="@style/Theme.App_Github_User"
         tools:targetApi="31">
         <activity
+            android:name=".ui.settings.SettingActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.main.MainActivity"
+            android:label="Setting"
+            >
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".ui.favorite.FavoriteActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.main.MainActivity"
+            android:label="Favorite"
+            >
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".ui.SplashScreen"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,11 +49,12 @@
             android:name=".ui.detail.DetailUserActivity"
             android:exported="false"
             android:parentActivityName=".ui.main.MainActivity"
+            android:label="Detail"
             />
         <activity
             android:name=".ui.main.MainActivity"
-            android:exported="false"/>
-
+            android:exported="false"
+            />
     </application>
 
 </manifest>

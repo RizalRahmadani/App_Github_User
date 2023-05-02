@@ -1,15 +1,18 @@
 package com.rzl.app_github_user.ui.detail
 
+import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.rzl.app_github_user.ItemsItem
-import com.rzl.app_github_user.data.RetrofitApi
+import com.rzl.app_github_user.data.UserRepository
+import com.rzl.app_github_user.data.local.entity.UserEntity
+import com.rzl.app_github_user.data.remote.retrofit.RetrofitApi
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class DetailViewModel : ViewModel() {
+class DetailViewModel (application: Application) : ViewModel() {
     val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> = _loading
 
@@ -21,6 +24,21 @@ class DetailViewModel : ViewModel() {
 
     val _listFollow = MutableLiveData<List<ItemsItem>>()
     val listFollow: LiveData<List<ItemsItem>> = _listFollow
+
+
+    private val mFavoriteUserRepo: UserRepository =
+        UserRepository(application)
+
+    fun insert(user: UserEntity){
+        mFavoriteUserRepo.insert(user)
+    }
+
+    fun delete(id: Int){
+        mFavoriteUserRepo.delete(id)
+    }
+
+    fun getFavorite(): LiveData<List<UserEntity>> =
+        mFavoriteUserRepo.getAllFavorites()
 
     fun getDetailUser(username: String) {
         _loading.value = true
@@ -44,43 +62,11 @@ class DetailViewModel : ViewModel() {
         })
     }
 
-    fun getFollowersList(username: String) {
-        _loading.value = true
-        val client = RetrofitApi.getApiService().getFollowers(username)
-        client.enqueue(object : Callback<List<ItemsItem>> {
-            override fun onResponse(
-                call: Call<List<ItemsItem>>,
-                response: Response<List<ItemsItem>>
-            ) {
-                _loading.value = false
-                _listFollow.value = response.body()
-            }
-
-            override fun onFailure(call: Call<List<ItemsItem>>, t: Throwable) {
-                _loading.value = false
-                _error.value = true
-            }
-        })
+    fun doneToastError(){
+        _error.value = false
     }
 
-    fun getFollowingList(username: String) {
-        _loading.value = true
-        val client = RetrofitApi.getApiService().getFollowing(username)
-        client.enqueue(object : Callback<List<ItemsItem>> {
-            override fun onResponse(
-                call: Call<List<ItemsItem>>,
-                response: Response<List<ItemsItem>>
-            ) {
-                _loading.value = false
-                _listFollow.value = response.body()
-            }
 
-            override fun onFailure(call: Call<List<ItemsItem>>, t: Throwable) {
-                _loading.value = false
-                _error.value = true
-            }
-        })
-    }
 
 
 }

@@ -13,4 +13,8 @@
     <string name="content_tab_text">This is Tab %1$d</string>
     <string name="location">Location</string>
     <string name="count">0</string>
+    <string name="favorite">Favorite</string>
+    <string name="settings">Settings</string>
+    <string name="theme">THEME</string>
+    <string name="dark_mode">Dark Mode</string>
 </resources>
